@@ -19,12 +19,12 @@ library(rasterVis)
 library(remotes)
 library(sf)
 library(here)
-
+library(terra)
 ```
 
 ##make sure we can get a raster in
 ```{r}
 
 testRast <- rast(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "CHM", "HARV_chmCrop.tif"))
-
+plot(testRast)
 ```
