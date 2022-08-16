@@ -1,0 +1,30 @@
+---
+title: "Setup"
+author: "Noah Moyer"
+date: "2022-08-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(raster)
+library(rgdal)
+library(rasterVis)
+library(remotes)
+library(sf)
+library(here)
+
+```
+
+##make sure we can get a raster in
+```{r}
+
+testRast <- rast(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "CHM", "HARV_chmCrop.tif"))
+
+```
