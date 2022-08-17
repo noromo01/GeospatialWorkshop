@@ -1,0 +1,124 @@
+---
+title: "PlotRasterData"
+author: "Noah Moyer"
+date: "2022-08-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(raster)
+library(rgdal)
+library(rasterVis)
+library(remotes)
+library(sf)
+library(here)
+library(terra)
+```
+
+
+```{r}
+DSM_HARV <- raster(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DSM", "HARV_dsmCrop.tif"))
+
+DSM_HARV_df <- as.data.frame(DSM_HARV, xy = TRUE)
+```
+
+
+```{r}
+DSM_HARV_df <- DSM_HARV_df %>%
+  mutate(fct_elevation = cut(HARV_dsmCrop,
+                             breaks = 3)) #mutate modifies df and cuts it into three different bins)
+
+ggplot() +
+  geom_bar(data = DSM_HARV_df,
+           aes(fct_elevation))
+  
+unique(DSM_HARV_df$fct_elevation) #gives us the different levels in fct_elevation
+
+DSM_HARV_df %>%
+  group_by(fct_elevation) %>%
+  count()
+
+custom_bins <- c(300, 350, 400, 450)
+
+DSM_HARV_df <- DSM_HARV_df %>%
+  mutate(fct_elevation_2 = cut(HARV_dsmCrop, breaks = custom_bins))
+
+unique(DSM_HARV_df$fct_elevation_2)
+
+ggplot() +
+  geom_bar(data = DSM_HARV_df,
+           aes(fct_elevation_2))
+
+DSM_HARV_df %>%
+  group_by(fct_elevation_2) %>%
+  count()
+
+ggplot() +
+  geom_raster(data = DSM_HARV_df,
+              aes(x=x, y=y, fill=fct_elevation_2)) +
+  coord_quickmap()
+
+#build in base r color that gives us terrain colors
+terrain.colors(3)
+
+ggplot() +
+  geom_raster(data = DSM_HARV_df,
+               aes(x=x, y=y, fill = fct_elevation_2)) +
+  scale_fill_manual(values = terrain.colors(3)) + #using more standard terrain colors
+  coord_quickmap()
+
+my_col <- terrain.colors(3)
+
+
+ggplot() +
+  geom_raster(data = DSM_HARV_df,
+              aes(x=x, y=y, fill = fct_elevation_2)) +
+  scale_fill_manual(values = my_col,
+                    name = "Elevation (m)")
+```
+
+```{r}
+
+DSM_HARV_df <- DSM_HARV_df %>%
+  mutate(fct_elevation = cut(HARV_dsmCrop,
+                             breaks = 6))
+ggplot() +
+  geom_raster(data = DSM_HARV_df,
+              aes(x=x, y=y, fill = fct_elevation)) +
+  scale_fill_manual(values = terrain.colors(6)) +
+  labs(y= "Longitude", x= "Latitude") +
+  ggtitle("canopy levels harvard")
+  
+```
+
+#Layering Rasters
+```{r}
+
+DSM_hill_Harv <- raster(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DSM", "HARV_DSMhill.tif"))
+
+DSM_hill_Harv_df <- as.data.frame(DSM_hill_Harv, xy = TRUE)
+
+ggplot() +
+  geom_raster(data= DSM_hill_Harv_df,
+              aes(x=x, y=y, alpha=HARV_DSMhill)) + #alpha tells us trasnparency rules
+  scale_alpha(range = c(0.15, 0.65), guide = "none") +#the range of trasnparency is between 0.15 and 0.65. guide tells us that we do not want this on the legend
+  coord_quickmap()
+
+#always start with geometry that is on the very bottom and each subsequent one will be added on top
+ggplot() +
+  geom_raster(data = DSM_HARV_df,
+              aes(x=x, y=y, fill = HARV_dsmCrop)) +
+  geom_raster(data = DSM_hill_Harv_df,
+              aes(x=x, y=y, alpha = HARV_DSMhill)) +
+  scale_fill_viridis_c() +
+  scale_alpha(range= c(0.15, 0.65), guide = "none") +
+  ggtitle("Elevation with hillshade") +
+  coord_quickmap() #always need to do this with raster data
+```

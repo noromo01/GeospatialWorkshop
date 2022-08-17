@@ -1,0 +1,58 @@
+---
+title: "ReprojectRasterData"
+author: "Noah Moyer"
+date: "2022-08-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(raster)
+library(rgdal)
+library(rasterVis)
+library(remotes)
+library(sf)
+library(here)
+library(terra)
+```
+
+```{r}
+
+DTM_HARV <- raster(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DTM", "HARV_dtmCrop.tif"))
+DTM_hill_HARV <- raster(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DTM", "HARV_DTMhill_WGS84.tif"))
+
+DTM_HARV_df <- as.data.frame(DTM_HARV, xy = TRUE)
+DTM_hill_HARV_df <- as.data.frame(DTM_hill_HARV, xy=TRUE)
+
+ggplot() +
+  geom_raster(data = DTM_HARV_df,
+              aes(x=x, y=y,
+                  fill = HARV_dtmCrop)) +
+  geom_raster(data = DTM_hill_HARV_df,
+              aes(x=x, y=y,
+                  alpha = HARV_DTMhill_WGS84))+
+  scale_fill_gradientn(name= "Elevation", colors = terrain.colors(10)) + #another way of coloring a map
+  coord_quickmap() #must always have this
+#this throws an error, something weird is going on
+
+crs(DTM_HARV) #crs = coordinate reference system
+crs(DTM_hill_HARV)
+#we see that these have different crs
+
+DTM_hill_UTMZ18N_HARV <- projectRaster(DTM_hill_HARV,
+                                       crs=crs(DTM_HARV)) #reproject DRM_hill_HARV to the crs of DTM_HARV
+
+crs(DTM_hill_UTMZ18N_HARV)
+#we have changed the crs to something that works now
+
+extent(DTM_hill_HARV)
+#lat and long values for extent
+extent(DTM_hill_UTMZ18N_HARV)
+#meters for extent, that is why the crs did not line up
+```

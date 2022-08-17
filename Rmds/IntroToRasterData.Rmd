@@ -1,0 +1,80 @@
+---
+title: "Intro to Raster Data"
+author: "Noah Moyer"
+date: "2022-08-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(raster) #general raster package
+library(rgdal) #spatial R package that helps us get metadata on rasters. Attribute information
+library(ggplot2) #ploting raster and vector data in R
+library(dplyr) #workhorse of wrangling data. Filter, adding new colomns, etc
+library(here)
+```
+
+```{r}
+
+GDALinfo(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DSM", "HARV_dsmCrop.tif"))
+#gives us information on the raster
+
+HARV_dsmCrop_Info <- capture.output(
+  GDALinfo(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DSM", "HARV_dsmCrop.tif"))
+)
+#saving information about the raster
+
+DSM_HARV <- raster(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DSM", "HARV_dsmCrop.tif"))
+#image with metadata attached to it
+
+summary(DSM_HARV)
+#tells us information about quartile summary of DSM_HARV but only generates a sample of the data
+
+summary(DSM_HARV, maxsamp = ncell(DSM_HARV))
+#tells us summary of all the data, ncell returns the number of cells of the input raster
+
+#rasters must be converted into a data frame in order to be used in ggplot
+DSM_HARV_df <- as.data.frame(DSM_HARV, xy = TRUE)
+#xy = true tells us that the columns are the xy cords
+
+str(DSM_HARV_df)
+#tells us structure of object
+
+#ggplot allows us to add different graphs (histograms, graphs, etc)
+ggplot() +
+  geom_raster(data = DSM_HARV_df, aes(x=x, y=y, fill= HARV_dsmCrop)) + #aes() fills rows and cols in raster
+  scale_fill_viridis_c() + #colorblind friendly
+  coord_quickmap() #sets a coordinate set so everything plots properly
+
+raster::metadata(DSM_HARV) #sometimes tell us the metadata (more detailed information about understand a particular map)
+
+plot(DSM_HARV) #more simple way to just take a quick look at the data
+
+crs(DSM_HARV)
+# proj=utm: the projection is UTM (Universal Transverse Mercator), UTM has several zones.
+# zone=18: the zone is 18
+# datum=WGS84: the datum is WGS84 (the datum refers to the 0,0 reference for the coordinate system used in the projection)
+# units=m: the units for the coordinates are in meters
+# ellps=WGS84: the ellipsoid (how the earth’s roundness is calculated) for the data is WGS84
+
+minValue(DSM_HARV)
+maxValue(DSM_HARV)
+
+nlayers(DSM_HARV)
+#how many bands does our raster have
+#note that when you run the raster data above it only loads the first band
+#certain pixel values have no data which is labeled as NoDataValue and is given a specific raster value which should be ignored
+
+ggplot() +
+  geom_histogram(data = DSM_HARV_df, aes(HARV_dsmCrop), bins = 200)
+```
+
+##Challenge to compare rasters
+```{r}
+
+GDALinfo(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DSM", "HARV_DSMhill.tif"))
+GDALinfo(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DSM", "HARV_dsmCrop.tif"))
+```
