@@ -60,7 +60,7 @@ crs(DSM_HARV)
 # units=m: the units for the coordinates are in meters
 # ellps=WGS84: the ellipsoid (how the earth’s roundness is calculated) for the data is WGS84
 
-minValue(DSM_HARV)
+minValue(DSM_HARV) #min and max values of the raster
 maxValue(DSM_HARV)
 
 nlayers(DSM_HARV)
@@ -69,7 +69,7 @@ nlayers(DSM_HARV)
 #certain pixel values have no data which is labeled as NoDataValue and is given a specific raster value which should be ignored
 
 ggplot() +
-  geom_histogram(data = DSM_HARV_df, aes(HARV_dsmCrop), bins = 200)
+  geom_histogram(data = DSM_HARV_df, aes(HARV_dsmCrop), bins = 200) #aes stands for aesthetic and tells us the values to be held by the raster
 ```
 
 ##Challenge to compare rasters

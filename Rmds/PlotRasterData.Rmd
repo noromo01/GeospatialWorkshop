@@ -33,22 +33,22 @@ DSM_HARV_df <- as.data.frame(DSM_HARV, xy = TRUE)
 ```{r}
 DSM_HARV_df <- DSM_HARV_df %>%
   mutate(fct_elevation = cut(HARV_dsmCrop,
-                             breaks = 3)) #mutate modifies df and cuts it into three different bins)
+                             breaks = 3)) #mutate modifies df and cuts it into three different, even sized bins)
 
 ggplot() +
   geom_bar(data = DSM_HARV_df,
            aes(fct_elevation))
   
-unique(DSM_HARV_df$fct_elevation) #gives us the different levels in fct_elevation
+unique(DSM_HARV_df$fct_elevation) #gives us the different levels in fct_elevation. Shows how breaks divided the bins
 
 DSM_HARV_df %>%
   group_by(fct_elevation) %>%
-  count()
+  count() #generally unsure what this specific line of code is doing...
 
-custom_bins <- c(300, 350, 400, 450)
+custom_bins <- c(300, 350, 400, 450) #chosing your own custom bins
 
 DSM_HARV_df <- DSM_HARV_df %>%
-  mutate(fct_elevation_2 = cut(HARV_dsmCrop, breaks = custom_bins))
+  mutate(fct_elevation_2 = cut(HARV_dsmCrop, breaks = custom_bins)) #breaks are now set to your custom bins
 
 unique(DSM_HARV_df$fct_elevation_2)
 
@@ -63,7 +63,7 @@ DSM_HARV_df %>%
 ggplot() +
   geom_raster(data = DSM_HARV_df,
               aes(x=x, y=y, fill=fct_elevation_2)) +
-  coord_quickmap()
+  coord_quickmap() #must always have this for plotting rasters
 
 #build in base r color that gives us terrain colors
 terrain.colors(3)
@@ -117,8 +117,9 @@ ggplot() +
               aes(x=x, y=y, fill = HARV_dsmCrop)) +
   geom_raster(data = DSM_hill_Harv_df,
               aes(x=x, y=y, alpha = HARV_DSMhill)) +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c() + #color blind freindly version
   scale_alpha(range= c(0.15, 0.65), guide = "none") +
   ggtitle("Elevation with hillshade") +
   coord_quickmap() #always need to do this with raster data
+#once you add a new raster you can't modify the old one
 ```
