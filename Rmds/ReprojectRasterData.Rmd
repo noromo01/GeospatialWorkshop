@@ -55,5 +55,50 @@ extent(DTM_hill_HARV)
 #lat and long values for extent
 extent(DTM_hill_UTMZ18N_HARV)
 #meters for extent, that is why the crs did not line up
-# :<)
+
+res(DTM_hill_UTMZ18N_HARV) #resolution of 1.000 and 0.998
+res(DTM_HARV) #resolution of 1 and 1 which does not line up
+#resolution tells us grid size (1 by 1)
+
+DTM_hill_UTMZ18N_HARV <- projectRaster(DTM_hill_HARV, 
+                                       crs = crs(DTM_HARV),
+                                       res = res(DTM_HARV)) #fixes the resolution issue
+
+res(DTM_hill_UTMZ18N_HARV) # resolution of 1 and 1 which lines up
+
+# Convert to data frame
+DTM_hill_HARV_2_df <- as.data.frame(DTM_hill_UTMZ18N_HARV, xy=TRUE)
+
+# Looking at the top of the dataframes
+head(DTM_HARV_df)
+head(DTM_hill_HARV_2_df)
+
+ggplot() +
+  geom_raster(data = DTM_HARV_df,
+              aes(x = x, y = y, fill = HARV_dtmCrop)) +
+  geom_raster(data = DTM_hill_HARV_2_df,
+              aes(x = x, y = y, alpha = HARV_DTMhill_WGS84)) +
+  scale_fill_gradientn(name = "Elevation", colors = terrain.colors(10)) + #terrain color scheme with 10 colors
+  coord_quickmap() #makes sure everything lines up right
+```
+
+
+```{r}
+SJER_DSMhill_WGS84_tif <- raster(here("NEON-DS-Airborne-Remote-Sensing", "SJER", "DSM", "SJER_DSMhill_WGS84.tif"))
+SJER_dsmCrop_tif <- raster(here("NEON-DS-Airborne-Remote-Sensing", "SJER", "DSM", "SJER_dsmCrop.tif"))
+
+SJER_DSMhill_WGS84_tif <- projectRaster(SJER_DSMhill_WGS84_tif,
+                                        crs = crs(SJER_dsmCrop_tif),
+                                        proj = proj(SJER_dsmCrop_tif)) #proj can also equal 1 which would just set the resolution to 1
+
+SJER_DSMhill_WGS84_df <- as.data.frame(SJER_DSMhill_WGS84_tif, xy=TRUE)
+SJER_dsmCrop_df <- as.data.frame(SJER_dsmCrop_tif, xy=TRUE)
+
+ggplot() +
+  geom_raster(data = SJER_dsmCrop_df,
+              aes(x=x, y=y, fill = SJER_dsmCrop)) +
+  geom_raster(data = SJER_DSMhill_WGS84_df,
+              aes(x=x, y=y, alpha = SJER_DSMhill_WGS84)) +
+  scale_fill_gradientn(name = "Elevation", colors = terrain.colors(10)) +
+  coord_quickmap()
 ```
