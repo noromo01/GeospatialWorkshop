@@ -1,0 +1,65 @@
+---
+title: "OpenAndPlotShapefiles"
+author: "Noah Moyer"
+date: "2022-08-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(raster)
+library(rgdal)
+library(rasterVis)
+library(remotes)
+library(sf)
+library(here)
+library(terra)
+library(tidyverse)
+```
+
+```{r}
+
+aoi_boundary_HARV <- st_read(here("NEON-DS-Site-layout-files", "HARV", "HarClip_UTMz18.shp")) #any st function comes from the sf package
+#st_read gives us some information about the meta_data
+
+st_geometry_type(aoi_boundary_HARV)
+#tells us what the geometry of a vector is
+#Levels tell us all the possibilities but what the result is is what level it actually is
+
+st_crs(aoi_boundary_HARV)
+#with sf package we use st_crs to find crs of vector file
+#THIS IS WHY ME AND LAUREN WERE HAVING ISSUES WITH FINDING THE CRS OF THE SHAPEFILE WOW CRAZY THIS IS COOL
+
+st_bbox(aoi_boundary_HARV)
+#gives us an outter box that the shape file is contained in
+
+ggplot() +
+  geom_sf(data = aoi_boundary_HARV,
+          size = 3, color = "black", fill = "cyan1") +  #size changes thickness of the border of the polygon
+  ggtitle("AOI Boundary Plot") +
+  coord_sf() #how we deal with distortions with shape files
+
+
+```
+
+
+```{r}
+
+lines_HARV <- st_read(here("NEON-DS-Site-layout-files", "HARV", "HARV_roads.shp"))
+point_HARV <- st_read(here("NEON-DS-Site-layout-files", "HARV", "HARVtower_UTM18N.shp"))
+
+st_crs(lines_HARV)
+st_crs(point_HARV)
+
+st_geometry_type(lines_HARV)
+st_geometry_type(point_HARV)
+
+class(lines_HARV)
+class(point_HARV)
+```
