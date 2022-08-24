@@ -1,0 +1,109 @@
+---
+title: "Raster Calculations"
+author: "Noah Moyer"
+date: "2022-08-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(raster)
+library(rgdal)
+library(rasterVis)
+library(remotes)
+library(sf)
+library(here)
+library(terra)
+library(tidyverse) #lets us pipe, contains ggplot too, better than tidyr
+```
+
+```{r}
+
+DTM_HARV <- raster(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DTM", "HARV_dtmCrop.tif"))
+DSM_HARV <- raster(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DSM", "HARV_dsmCrop.tif"))
+
+DTM_HARV_df <- as.data.frame(DTM_HARV, xy = TRUE)
+DSM_HARV_df <- as.data.frame(DSM_HARV, xy = TRUE)
+
+GDALinfo(here("NEON-DS-Airborne-Remote-Sensing", "HARV", "DTM", "HARV_dtmCrop.tif"))
+#gives us general metadata information about a raster so that we can learn more information about it without pulling it in
+
+ggplot() +
+  geom_raster(data = DTM_HARV_df,
+              aes(x=x, y=y, fill = HARV_dtmCrop)) +
+  scale_fill_gradientn(name = "Elevation", colors = terrain.colors(10)) +
+  coord_quickmap()
+
+ggplot() +
+  geom_raster(data = DSM_HARV_df,
+              aes(x=x, y=y, fill = HARV_dsmCrop)) +
+  scale_fill_gradientn(name = "Elevation", colors = terrain.colors(10)) +
+  coord_quickmap()
+
+#Create our Canopy Height Model - Option 1
+
+CHM_HARV <- DSM_HARV - DTM_HARV
+#raster calculation that is subtracting DSM from DTM to get a new raster called CHM
+
+CHM_HARV_df <- as.data.frame(CHM_HARV, xy = TRUE)
+
+ggplot() +
+  geom_raster(data = CHM_HARV_df,
+              aes(x=x, y=y, fill = layer)) +
+  scale_fill_gradientn(name = "Canopy Height", colors = terrain.colors(10)) +
+  coord_quickmap()
+
+# Plot as a histogram
+ggplot(data = CHM_HARV_df) +
+  geom_histogram(aes(layer))
+#think about what the histogram tells us and if it makes sense (negative numbers would not make sense here, look at clusters, etc)
+
+```
+
+```{r}
+min(CHM_HARV_df$layer, na.rm = TRUE) #need na.rm or else returns NA
+max(CHM_HARV_df$layer, na.rm = TRUE)
+range(CHM_HARV_df$layer, na.rm = TRUE)
+
+ggplot(data = CHM_HARV_df) +
+  geom_histogram(aes(layer), color = "black", fill = "darkgreen", bins = 100)
+
+custom_bins <- c(0,10,20,30,40)
+
+CHM_HARV_df <- CHM_HARV_df %>% # %>% stands for piping, adds new things to a df via piping, need tidyverse in order to use
+  mutate(canopy_discrete = cut(layer, breaks = custom_bins)) #mutate adds a new column to data frame. That new column is called canopy_discrete which is cut from layer by custom_bins
+
+ggplot() + geom_raster(data = CHM_HARV_df,
+                        aes(x=x, y=y, fill = canopy_discrete))+
+         scale_fill_manual(values = terrain.colors(4)) +
+         coord_quickmap()
+
+#Option 2 for Raster Calc
+CHM_ov_HARV <- overlay(DSM_HARV, DTM_HARV,
+                       fun = function(r1, r2){ return(r1-r2)}) #makes new raster that follows a function that subtracts the first entry from the second entry
+
+CHM_ov_HARV_df <- as.data.frame(CHM_ov_HARV, xy = TRUE)
+
+ggplot() +
+  geom_raster(data = CHM_ov_HARV_df,
+              aes(x=x, y=y, fill = layer)) +
+  scale_fill_gradientn(name = "Canopy Height", colors = terrain.colors(10)) +
+  coord_quickmap()
+
+#Saving a raster
+writeRaster(
+  x = CHM_ov_HARV,
+  filename = here("outputs", "CHM_HARV.tif"),
+  format = "GTiff",
+  overwrite = TRUE, #if kept false will throw an error if there is a file name that matches the file in this location
+  NAflag  = -9999 #changes NAs to -9999
+)
+```
+
+
