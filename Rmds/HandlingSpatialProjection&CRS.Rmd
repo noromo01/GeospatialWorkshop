@@ -1,0 +1,87 @@
+---
+title: "HandlingSpatialProjection&CRS"
+author: "Noah Moyer"
+date: "2022-09-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(raster)
+library(rgdal)
+library(rasterVis)
+library(remotes)
+library(sf)
+library(here)
+library(terra)
+library(tidyverse)
+```
+
+```{r}
+
+state_boundary_US <- st_read(here("NEON-DS-Site-Layout-Files", "US-Boundary-Layers", "US-State-Boundaries-Census-2014.shp"))
+
+ggplot() +
+  geom_sf(data = state_boundary_US) +
+  ggtitle("Map of Continguous US State Boundaries") +
+  coord_sf() #makes sure everything lines up nicely
+
+country_boundary_US <- st_read(here("NEON-DS-Site-Layout-Files", "US-Boundary-Layers", "US-Boundary-Dissolved-States.shp"))
+
+ggplot() +
+  geom_sf(data = country_boundary_US, color = "gray18", size = 2) +#color and thickness of boundary
+  geom_sf(data = state_boundary_US, color = "gray40") +
+  ggtitle("Map of Contiguous US State Boundaries") +
+  coord_sf()
+
+point_HARV <- st_read(here("NEON-DS-Site-Layout-Files", "HARV", "HARVtower_UTM18N.shp"))
+
+#live in different CRS
+st_crs(point_HARV) #WGS 84, UTM zone 18N
+st_crs(state_boundary_US) #WGS 84
+
+
+st_bbox(point_HARV) #box is in the 10000s
+st_bbox(state_boundary_US) #box is in the 100s
+
+temp_state_boundary_US <- st_transform(state_boundary_US,
+                                       crs = st_crs(point_HARV)) #takes the state_boundary_US shp file and transforms the crs to point_HARV and assigns that to temp_state_boundary_US
+
+st_crs(temp_state_boundary_US) #it worked!
+
+ggplot() +
+  geom_sf(data = country_boundary_US, size = 2, color = "gray18") +
+  geom_sf(data = state_boundary_US, color = "gray40") +
+  geom_sf(data = point_HARV, shape = 19, color = "purple", size = 4) + #shape tells us what the dot will look at on the map, ?pch tells us what our options are
+  ggtitle(" Map of Contiguous US State Boundaries") +
+  coord_sf()
+#note that we do not need to change the crs for state_boundary or country_boundary to the crs of point_HARV, R does it for us!
+
+st_crs(point_HARV)$proj4string #gives us a much more compact crs that is more readable
+```
+
+
+```{r}
+
+NEast_US <- st_read(here("NEON-DS-Site-Layout-Files", "US-Boundary-Layers", "Boundary-US-State-NEast.shp"))
+
+ggplot() +
+  geom_sf(data = NEast_US,
+          aes(color = "State Boundary"),
+          show.legend = "line") + #tells us what kind of legend we want to show
+  scale_color_manual(name = "", values = c("State Boundary" = "gray18")) +
+  geom_sf(data = point_HARV,
+          aes(shape = "Fish Tower"), color = "purple") +
+  scale_shape_manual(name = "", 
+                     values = c("Fish Tower" = 19),
+                     guide = guide_legend(override.aes = list(linetype = NA))) +#is overriding the legend so that the point is not a line
+  ggtitle("Fish Tower Location") +
+  coord_sf()
+
+```
