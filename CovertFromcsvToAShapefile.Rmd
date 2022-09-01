@@ -1,0 +1,61 @@
+---
+title: "ConvertFrom.csvToAShapefile"
+author: "Noah Moyer"
+date: "2022-09-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(raster)
+library(rgdal)
+library(rasterVis)
+library(remotes)
+library(sf)
+library(here)
+library(terra)
+library(tidyverse)
+```
+
+
+```{r}
+
+plot_locations_HARV <- read.csv(here("NEON-DS-Site-Layout-Files", "HARV", "HARV_PlotLocations.csv"))
+#this is a csv files with coordinates for points where data was gathered
+
+str(plot_locations_HARV) #gives us some cursory information about the csv file
+names(plot_locations_HARV) #list of column names
+head(plot_locations_HARV$easting) #spits out first 6 values of each column
+head(plot_locations_HARV$northing)
+
+head(plot_locations_HARV$geodeticDa) #tells us information about the crs
+head(plot_locations_HARV$utmZone) #gives us more information about the crs
+#in real world generally the crs will be given in a read me file, not in a column in the data
+
+#re-read in point_HARV b/c it has the projection that we want
+point_HARV <- st_read(here("NEON-DS-Site-Layout-Files", "HARV", "HARVtower_UTM18N.shp"))
+st_crs(point_HARV)$proj4string #point Harv has the crs that we want
+
+utm18nCRS <- st_crs(point_HARV)
+class(utm18nCRS) #this variable has the crs that we want to use
+
+#Convert csv to sf/shapefile
+plot_locations_sp_HARV <- st_as_sf(plot_locations_HARV,
+                                   coords = c("easting", "northing"), #assigning x and y coords
+                                   crs = utm18nCRS) #the crs that will be used
+
+class(plot_locations_sp_HARV) #we know that this is a shapefile now
+st_crs(plot_locations_sp_HARV)$proj4string #the crs worked out
+
+#Plot it
+ggplot() +
+  geom_sf(data = plot_locations_sp_HARV) +
+  ggtitle("Map of plot locations") +
+  coord_sf()
+```
